@@ -20,7 +20,7 @@ public class BoidsManager : MonoBehaviour
     [Header("Query settings")]
     [SerializeField] private Transform querySphere;
     [SerializeField] private float queryRadius = 5f;
-    [SerializeField] private Material querySphereMaterial;
+    [SerializeField] private bool showGird = false;
     
     private GameObject[] _boidsInstances;
     private Renderer[] _boidsRenderers;
@@ -57,7 +57,6 @@ public class BoidsManager : MonoBehaviour
     
     void Start()
     {
-        CreateQuerySphere();
         InitializeBoids();
     }
 
@@ -65,16 +64,11 @@ public class BoidsManager : MonoBehaviour
     {
         Gizmos.color = Color.green;
         
-        DrawSpatialGrid();
-    }
-
-    private void CreateQuerySphere()
-    {
-        GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        sphere.transform.SetParent(querySphere);
-        sphere.GetComponent<Renderer>().material = querySphereMaterial;
-        sphere.GetComponent<Collider>().enabled = false;
-        sphere.transform.localScale = Vector3.one * (queryRadius * 2f);
+        if (querySphere != null)
+            Gizmos.DrawWireSphere(querySphere.position, queryRadius);
+        
+        if (showGird)
+            DrawSpatialGrid();
     }
 
     private void DrawSpatialGrid()
@@ -259,7 +253,7 @@ public class BoidsManager : MonoBehaviour
 
         public void Execute()
         {
-            float radiuesSquared = QueryRadius * QueryRadius;
+            float radiusSquared = QueryRadius * QueryRadius;
             int3 minGridPos = GridPosition(QueryPosition - QueryRadius, CellSize);
             int3 maxGridPos = GridPosition(QueryPosition + QueryRadius, CellSize);
 
@@ -282,7 +276,7 @@ public class BoidsManager : MonoBehaviour
                             Boid boid = Boids[boidIndex];
                             float3 toBoid = boid.Position - QueryPosition;
 
-                            if (math.lengthsq(toBoid) <= radiuesSquared)
+                            if (math.lengthsq(toBoid) <= radiusSquared)
                             {
                                 ResultIndices.Add(boidIndex);
                             }
