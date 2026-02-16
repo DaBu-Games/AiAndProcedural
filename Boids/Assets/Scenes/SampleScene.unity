@@ -150,15 +150,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoidsManager
   boidPrefab: {fileID: 6564943798197031617, guid: 9844a959b88c4be4a8fbe94b9c6e3077, type: 3}
   boidsCount: 200
+  cohesionWeight: 0.1
+  alignmentWeight: 1
+  separationWeight: 0.1
+  maxVelocity: 5
   boidBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 10, y: 10, z: 10}
-  minRadius: 0.5
-  maxRadius: 1.5
+  minRadius: 0.1
+  maxRadius: 0.1
   cellSize: 2
-  querySphere: {fileID: 1478717273}
-  queryRadius: 5
-  querySphereMaterial: {fileID: 2100000, guid: 9cadbc26b08057d4aa17c09298473acf, type: 2}
+  queryRadiusMultiplier: 15
+  showGird: 0
 --- !u!4 &256607344
 Transform:
   m_ObjectHideFlags: 0
@@ -261,7 +264,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: 1, z: -20}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

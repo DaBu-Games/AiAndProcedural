@@ -9,33 +9,42 @@ using Random = UnityEngine.Random;
 
 public class BoidsManager : MonoBehaviour
 {
-    [Header("Boid settings")]
+    [Header("Boid settings")] 
     [SerializeField] private GameObject boidPrefab;
-    [FormerlySerializedAs("boidCount")] [SerializeField] private int boidsCount = 50;
+    [SerializeField] private int boidsCount = 50;
+    [SerializeField] float cohesionWeight = 0.01f;
+    [SerializeField] float alignmentWeight = 0.05f;
+    [SerializeField] float separationWeight = 0.1f;
+    [SerializeField] float maxVelocity = 1f;
+
     [SerializeField] private Bounds boidBounds = new Bounds(Vector3.zero, new Vector3(20, 20, 20));
     [SerializeField] private float minRadius = 0.5f;
     [SerializeField] private float maxRadius = 1.5f;
     [SerializeField] private float cellSize = 2f;
-    
+
     [Header("Query settings")]
-    [SerializeField] private Transform querySphere;
-    [SerializeField] private float queryRadius = 5f;
+    //[SerializeField] private Transform querySphere;
+    [SerializeField]
+    private float queryRadiusMultiplier = 1.5f;
+
     [SerializeField] private bool showGird = false;
-    
+
     private GameObject[] _boidsInstances;
     private Renderer[] _boidsRenderers;
-    
-    NativeArray<Boid> _boidsNative;
-    NativeArray<HashAndIndex> _hashAndIndices;
-    private NativeList<int> _resultIndices; 
 
-    struct Boid{
+    NativeArray<Boid> _boidsNative;
+    NativeArray<Boid> _boidsNext;
+    NativeArray<HashAndIndex> _hashAndIndices;
+
+    struct Boid
+    {
         public float3 Position;
         public float3 Velocity;
         public float Radius;
     }
 
-    struct HashAndIndex : IComparable<HashAndIndex>{
+    struct HashAndIndex : IComparable<HashAndIndex>
+    {
         public int Hash;
         public int Index;
 
@@ -45,16 +54,19 @@ public class BoidsManager : MonoBehaviour
         }
     }
 
-    static int Hash(int3 gridPos){
-        unchecked {
+    static int Hash(int3 gridPos)
+    {
+        unchecked
+        {
             return gridPos.x * 73856093 ^ gridPos.y * 19349663 ^ gridPos.z * 83492791;
         }
     }
-    
-    static int3 GridPosition(float3 position, float cellSize){
+
+    static int3 GridPosition(float3 position, float cellSize)
+    {
         return new int3(math.floor(position / cellSize));
     }
-    
+
     void Start()
     {
         InitializeBoids();
@@ -63,10 +75,10 @@ public class BoidsManager : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
-        
-        if (querySphere != null)
-            Gizmos.DrawWireSphere(querySphere.position, queryRadius);
-        
+
+        //if (querySphere != null)
+        //Gizmos.DrawWireSphere(querySphere.position, queryRadius);
+
         if (showGird)
             DrawSpatialGrid();
     }
@@ -83,7 +95,8 @@ public class BoidsManager : MonoBehaviour
             {
                 for (int z = 0; z < gridCountZ; z++)
                 {
-                    Vector3 cellCenter = boidBounds.min + new Vector3(x, y, z) * cellSize + Vector3.one * (cellSize / 2f);
+                    Vector3 cellCenter = boidBounds.min + new Vector3(x, y, z) * cellSize +
+                                         Vector3.one * (cellSize / 2f);
                     Gizmos.DrawWireCube(cellCenter, Vector3.one * cellSize);
                 }
             }
@@ -95,6 +108,7 @@ public class BoidsManager : MonoBehaviour
         _boidsInstances = new GameObject[boidsCount];
         _boidsRenderers = new Renderer[boidsCount];
         _boidsNative = new NativeArray<Boid>(boidsCount, Allocator.Persistent);
+        _boidsNext = new NativeArray<Boid>(boidsCount, Allocator.Persistent);
         _hashAndIndices = new NativeArray<HashAndIndex>(boidsCount, Allocator.Persistent);
 
         for (int i = 0; i < boidsCount; i++)
@@ -107,17 +121,18 @@ public class BoidsManager : MonoBehaviour
             float radius = Random.Range(minRadius, maxRadius);
 
             Vector3 velocity = new Vector3(
-                Random.Range(-1f, 1f), 
-                Random.Range(-1f, 1f), 
-                Random.Range(-1f, 1f)
+                Random.Range(-maxVelocity, maxVelocity),
+                Random.Range(-maxVelocity, maxVelocity),
+                Random.Range(-maxVelocity, maxVelocity)
             );
 
-            _boidsNative[i] = new Boid {
+            _boidsNative[i] = new Boid
+            {
                 Position = position,
                 Velocity = velocity,
                 Radius = radius
             };
-            
+
             GameObject boid = Instantiate(boidPrefab, position, Quaternion.identity);
             boid.transform.localScale = Vector3.one * radius * 2f;
             boid.transform.SetParent(transform);
@@ -128,61 +143,54 @@ public class BoidsManager : MonoBehaviour
 
     private void Update()
     {
-        if(!_boidsNative.IsCreated) 
+        if (!_boidsNative.IsCreated)
             return;
 
-        UpdateBoidsJob updateJob = new UpdateBoidsJob
+        HashBoidsJob hashJob = new HashBoidsJob
         {
-            Boids = _boidsNative,
-            BoundsMin = boidBounds.min,
-            BoundsMax = boidBounds.max,
-            DeltaTime = Time.deltaTime
-        };
-        
-        JobHandle updateJobHandle = updateJob.Schedule(_boidsNative.Length, 64);
-
-        HashBoidsJob hashJob = new HashBoidsJob {
             Boids = _boidsNative,
             CellSize = cellSize,
             HashAndIndices = _hashAndIndices,
         };
-        
-        JobHandle hashJobHandle = hashJob.Schedule(_boidsNative.Length, 64, updateJobHandle);
+
+        JobHandle hashJobHandle = hashJob.Schedule(_boidsNative.Length, 64);
 
         SortHashCodesJob sortJob = new SortHashCodesJob
         {
             HashAndIndices = _hashAndIndices
         };
-        
+
         JobHandle sortJobHandle = sortJob.Schedule(hashJobHandle);
 
-        QueryJob queryJob = new QueryJob
+        BoidsVelocityJob velocityJob = new BoidsVelocityJob
         {
             Boids = _boidsNative,
+            BoidsNext = _boidsNext,
             HashAndIndices = _hashAndIndices,
-            QueryPosition = querySphere.position,
-            QueryRadius = queryRadius,
+            BoundsMin = boidBounds.min,
+            BoundsMax = boidBounds.max,
+            QueryRadiusMultiplier = queryRadiusMultiplier,
             CellSize = cellSize,
-            ResultIndices = new NativeList<int>(Allocator.TempJob)
+            MaxVelocity = maxVelocity,
+            CohesionWeight = cohesionWeight,
+            AlignmentWeight = alignmentWeight,
+            SeparationWeight = separationWeight,
         };
-        
-        JobHandle queryJobHandle = queryJob.Schedule(sortJobHandle);
-        queryJobHandle.Complete();
-        
-        if(_resultIndices.IsCreated) 
-            _resultIndices.Dispose();
 
-        _resultIndices = queryJob.ResultIndices;
+        JobHandle updateJobHandle = velocityJob.Schedule(_boidsNative.Length, 64, sortJobHandle);
 
-        foreach (Renderer render in _boidsRenderers)
+        BoidsPositionJob positionJob = new BoidsPositionJob
         {
-            render.material.color = Color.white;
-        }
+            BoidsRead = _boidsNext,
+            BoidsWrite = _boidsNative,
+            DeltaTime = Time.deltaTime,
+        };
 
-        foreach (int index in _resultIndices)
-        {
-            _boidsRenderers[index].material.color = Color.red;
-        }
+        JobHandle positionJobHandle = positionJob.Schedule(_boidsNative.Length, 64, updateJobHandle);
+
+        positionJobHandle.Complete();
+
+        //(_boidsNative, _boidsNext) = (_boidsNext, _boidsNative);
 
         for (int i = 0; i < _boidsNative.Length; i++)
             _boidsInstances[i].transform.position = _boidsNative[i].Position;
@@ -190,50 +198,35 @@ public class BoidsManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        if(_boidsNative.IsCreated)
+        if (_boidsNative.IsCreated)
             _boidsNative.Dispose();
         
-        if(_hashAndIndices.IsCreated)
+        if (_boidsNext.IsCreated)
+            _boidsNext.Dispose();
+
+        if (_hashAndIndices.IsCreated)
             _hashAndIndices.Dispose();
-        
-        if(_resultIndices.IsCreated)
-            _resultIndices.Dispose();
-    }
-    
-    
-    [BurstCompile]
-    struct UpdateBoidsJob : IJobParallelFor {
-        public NativeArray<Boid> Boids;
-        public float3 BoundsMin;
-        public float3 BoundsMax;
-        public float DeltaTime;
-        
-        public void Execute(int index) {
-            Boid boid = Boids[index];
-            boid.Position += boid.Velocity * DeltaTime;
-            
-            // boid functions 
-            
-            Boids[index] = boid;
-        }
     }
 
     [BurstCompile]
-    struct HashBoidsJob : IJobParallelFor {
+    struct HashBoidsJob : IJobParallelFor
+    {
         [ReadOnly] public NativeArray<Boid> Boids;
         public NativeArray<HashAndIndex> HashAndIndices;
         public float CellSize;
-        
-        public void Execute(int index){
+
+        public void Execute(int index)
+        {
             Boid boid = Boids[index];
-            int hash = Hash( GridPosition(boid.Position, CellSize));
+            int hash = Hash(GridPosition(boid.Position, CellSize));
 
             HashAndIndices[index] = new HashAndIndex { Hash = hash, Index = index };
         }
     }
 
     [BurstCompile]
-    struct SortHashCodesJob : IJob{
+    struct SortHashCodesJob : IJob
+    {
         public NativeArray<HashAndIndex> HashAndIndices;
 
         public void Execute()
@@ -243,47 +236,93 @@ public class BoidsManager : MonoBehaviour
     }
 
     [BurstCompile]
-    struct QueryJob : IJob {
+    struct BoidsVelocityJob : IJobParallelFor
+    {
         [ReadOnly] public NativeArray<Boid> Boids;
-        [ReadOnly] public NativeArray<HashAndIndex> HashAndIndices;
-        public float3 QueryPosition;
-        public float QueryRadius;
-        public float CellSize;
-        public NativeList<int> ResultIndices;
+        public NativeArray<Boid> BoidsNext;
 
-        public void Execute()
+        [ReadOnly] public NativeArray<HashAndIndex> HashAndIndices;
+        public float3 BoundsMin;
+        public float3 BoundsMax;
+        public float QueryRadiusMultiplier;
+        public float CellSize;
+        public float MaxVelocity;
+        public float CohesionWeight;
+        public float AlignmentWeight;
+        public float SeparationWeight;
+
+        public void Execute(int index)
         {
-            float radiusSquared = QueryRadius * QueryRadius;
-            int3 minGridPos = GridPosition(QueryPosition - QueryRadius, CellSize);
-            int3 maxGridPos = GridPosition(QueryPosition + QueryRadius, CellSize);
+            Boid boid = Boids[index];
+
+            float3 cohesion = float3.zero;
+            float3 separation = float3.zero;
+            float3 alignment = float3.zero;
+            int neighborCount = 0;
+
+            float queryRadius = boid.Radius * QueryRadiusMultiplier;
+            float radiusSquared = queryRadius * queryRadius;
+            int3 minGridPos = GridPosition(boid.Position - queryRadius, CellSize);
+            int3 maxGridPos = GridPosition(boid.Position + queryRadius, CellSize);
 
             for (int x = minGridPos.x; x <= maxGridPos.x; x++)
             {
                 for (int y = minGridPos.y; y <= maxGridPos.y; y++)
                 {
-                    for (int z = minGridPos.z; z <= maxGridPos.z; z++) 
+                    for (int z = minGridPos.z; z <= maxGridPos.z; z++)
                     {
                         int3 gridPos = new int3(x, y, z);
                         int hash = Hash(gridPos);
-                        
+
                         int startIndex = BinarySearch(HashAndIndices, hash);
-                        
-                        if(startIndex < 0 )
+
+                        if (startIndex < 0)
                             continue;
 
-                        for (int i = startIndex; i < HashAndIndices.Length && HashAndIndices[i].Hash == hash; i++) {
+                        for (int i = startIndex; i < HashAndIndices.Length && HashAndIndices[i].Hash == hash; i++)
+                        {
                             int boidIndex = HashAndIndices[i].Index;
-                            Boid boid = Boids[boidIndex];
-                            float3 toBoid = boid.Position - QueryPosition;
+                            Boid boidTwo = Boids[boidIndex];
+                            float3 toBoid = boidTwo.Position - boid.Position;
 
                             if (math.lengthsq(toBoid) <= radiusSquared)
                             {
-                                ResultIndices.Add(boidIndex);
+                                neighborCount++;
+
+                                cohesion += boidTwo.Position;
+                                separation -= toBoid;
+
+                                alignment += boidTwo.Velocity;
                             }
                         }
                     }
                 }
             }
+
+            if (neighborCount > 0)
+            {
+                cohesion /= neighborCount;
+                alignment /= neighborCount;
+
+                boid.Velocity += cohesion * CohesionWeight + separation * SeparationWeight + alignment * AlignmentWeight;
+            }
+            
+            float3 pos = boid.Position;
+            float margin = 1f;
+            
+            if (pos.x < BoundsMin.x + margin) boid.Velocity.x = math.abs(boid.Velocity.x);
+            if (pos.y < BoundsMin.y + margin) boid.Velocity.y = math.abs(boid.Velocity.y);
+            if (pos.z < BoundsMin.z + margin) boid.Velocity.z = math.abs(boid.Velocity.z);
+
+            if (pos.x > BoundsMax.x - margin) boid.Velocity.x = -math.abs(boid.Velocity.x);
+            if (pos.y > BoundsMax.y - margin) boid.Velocity.y = -math.abs(boid.Velocity.y);
+            if (pos.z > BoundsMax.z - margin) boid.Velocity.z = -math.abs(boid.Velocity.z);
+            
+            float speed = Vector3.Magnitude(boid.Velocity);
+            if (speed > MaxVelocity)
+                boid.Velocity = boid.Velocity / speed * MaxVelocity;
+
+            BoidsNext[index] = boid;
         }
 
         int BinarySearch(NativeArray<HashAndIndex> array, int hash)
@@ -301,7 +340,7 @@ public class BoidsManager : MonoBehaviour
                 {
                     result = middle;
                     right = middle - 1;
-                } 
+                }
                 else if (midHash < hash)
                 {
                     left = middle + 1;
@@ -311,8 +350,24 @@ public class BoidsManager : MonoBehaviour
                     right = middle - 1;
                 }
             }
-            
+
             return result;
+        }
+    }
+
+
+    [BurstCompile]
+    struct BoidsPositionJob : IJobParallelFor
+    {
+        [ReadOnly] public NativeArray<Boid> BoidsRead;
+        public NativeArray<Boid> BoidsWrite;
+        public float DeltaTime;
+
+        public void Execute(int index)
+        {
+            Boid boid = BoidsRead[index];
+            boid.Position += boid.Velocity * DeltaTime;
+            BoidsWrite[index] = boid;
         }
     }
 }
