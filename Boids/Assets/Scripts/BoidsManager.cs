@@ -16,6 +16,7 @@ public class BoidsManager : MonoBehaviour
     [SerializeField] float alignmentWeight = 0.05f;
     [SerializeField] float separationWeight = 0.1f;
     [SerializeField] float maxVelocity = 1f;
+    [SerializeField] float minVelocity = 0.1f;
 
     [SerializeField] private Bounds boidBounds = new Bounds(Vector3.zero, new Vector3(20, 20, 20));
     [SerializeField] private float minRadius = 0.5f;
@@ -172,6 +173,7 @@ public class BoidsManager : MonoBehaviour
             QueryRadiusMultiplier = queryRadiusMultiplier,
             CellSize = cellSize,
             MaxVelocity = maxVelocity,
+            MinVelocity = minVelocity,
             CohesionWeight = cohesionWeight,
             AlignmentWeight = alignmentWeight,
             SeparationWeight = separationWeight,
@@ -247,6 +249,7 @@ public class BoidsManager : MonoBehaviour
         public float QueryRadiusMultiplier;
         public float CellSize;
         public float MaxVelocity;
+        public float MinVelocity;
         public float CohesionWeight;
         public float AlignmentWeight;
         public float SeparationWeight;
@@ -282,6 +285,9 @@ public class BoidsManager : MonoBehaviour
                         for (int i = startIndex; i < HashAndIndices.Length && HashAndIndices[i].Hash == hash; i++)
                         {
                             int boidIndex = HashAndIndices[i].Index;
+                            if(boidIndex == index)
+                                continue;
+                            
                             Boid boidTwo = Boids[boidIndex];
                             float3 toBoid = boidTwo.Position - boid.Position;
 
@@ -303,8 +309,11 @@ public class BoidsManager : MonoBehaviour
             {
                 cohesion /= neighborCount;
                 alignment /= neighborCount;
+                
+                float3 cohesionDir = cohesion - boid.Position;
+                float3 alignmentDir = alignment - boid.Velocity;
 
-                boid.Velocity += cohesion * CohesionWeight + separation * SeparationWeight + alignment * AlignmentWeight;
+                boid.Velocity += cohesionDir * CohesionWeight + separation * SeparationWeight + alignmentDir * AlignmentWeight;
             }
             
             float3 pos = boid.Position;
@@ -318,9 +327,12 @@ public class BoidsManager : MonoBehaviour
             if (pos.y > BoundsMax.y - margin) boid.Velocity.y = -math.abs(boid.Velocity.y);
             if (pos.z > BoundsMax.z - margin) boid.Velocity.z = -math.abs(boid.Velocity.z);
             
-            float speed = Vector3.Magnitude(boid.Velocity);
+            float speed =  math.length(boid.Velocity);
             if (speed > MaxVelocity)
                 boid.Velocity = boid.Velocity / speed * MaxVelocity;
+            
+            if(speed <= MinVelocity)
+                boid.Velocity = boid.Velocity / speed * MinVelocity;
 
             BoidsNext[index] = boid;
         }

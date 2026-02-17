@@ -149,18 +149,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoidsManager
   boidPrefab: {fileID: 6564943798197031617, guid: 9844a959b88c4be4a8fbe94b9c6e3077, type: 3}
-  boidsCount: 200
+  boidsCount: 10000
   cohesionWeight: 0.1
-  alignmentWeight: 1
-  separationWeight: 0.1
-  maxVelocity: 5
+  alignmentWeight: 0.2
+  separationWeight: 0.01
+  maxVelocity: 10
+  minVelocity: 3
   boidBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 10, y: 10, z: 10}
   minRadius: 0.1
   maxRadius: 0.1
   cellSize: 2
-  queryRadiusMultiplier: 15
+  queryRadiusMultiplier: 10
   showGird: 0
 --- !u!4 &256607344
 Transform:
