@@ -14,7 +14,7 @@ public class Agent : MonoBehaviour
     
     private void Awake()
     {
-        maze = Object.FindFirstObjectByType<MazeGeneration>();
+        maze = FindFirstObjectByType<MazeGeneration>();
         agentRenderer = GetComponentInChildren<MeshRenderer>();
         targetVisual = GameObject.CreatePrimitive(PrimitiveType.Cube);
         targetVisual.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);

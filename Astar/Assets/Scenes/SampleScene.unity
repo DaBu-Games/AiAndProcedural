@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveButton: 0
-  moveSpeed: 1
+  moveSpeed: 500
 --- !u!4 &451908293
 Transform:
   m_ObjectHideFlags: 0
@@ -309,7 +309,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveButton: 1
-  moveSpeed: 1
+  moveSpeed: 500
 --- !u!4 &519720385
 Transform:
   m_ObjectHideFlags: 0
@@ -738,8 +738,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6428c5efcaaebd44d8148775449b6a33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 10
-  height: 10
+  width: 100
+  height: 100
   scaleFactor: 1
   cellPrefab: {fileID: 8932503495734551348, guid: be3d5e704eab71c4aa3e4cdd60fda5de,
     type: 3}

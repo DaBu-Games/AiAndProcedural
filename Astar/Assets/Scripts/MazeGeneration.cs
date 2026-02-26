@@ -81,7 +81,8 @@ public class MazeGeneration : MonoBehaviour
         int totalWallsInMaze = GetWallCount(grid);
         int totalPossibleWallsInmaze = 4 * width * height;
         float wallPercentage = totalWallsInMaze / (float)totalPossibleWallsInmaze;
-        Debug.Log("Wall Percentage: " + wallPercentage);
+        
+        //Debug.Log("Wall Percentage: " + wallPercentage);
         while (wallPercentage > desiredWallpercentage)
         {
             int randomX = Random.Range(0, width);
