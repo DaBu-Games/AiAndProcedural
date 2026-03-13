@@ -1,0 +1,103 @@
+@startuml
+
+Enum NodeStatus {
+    Running
+    Success
+    Failure
+}
+
+class Node {
+    - string Name
+    # NodeStatus currentState
+    # List<Node> children
+    # int currentChild
+    + void AddChild(Node child)
+    + NodeStatus Process()
+    + void Reset()
+}
+
+class BehaviourTree {
+}
+
+class SequenceNode {
+}
+
+class SelectorNode {
+}
+
+class LeafNode {
+    - IStrategy strategy
+}
+
+interface IStrategy {
+    + NodeStatus Process()
+    + void Reset()
+}
+
+class ActionStrategy {
+    - Action action
+}
+
+class ConditionStrategy {
+    - System.Func<bool> condition
+}
+
+class MoveStrategy {
+    - Transform target
+    - Transform object
+    - NavMeshAgent meshAgent
+}
+
+class AttackStrategy {
+    - IDamagable damageable
+    - int damageAmount
+}
+
+class Enemy {
+    - Transform playerTransform
+    - BehaviourTree tree
+    - BlackBoard blackboard
+    - NavMeshAgent meshAgent
+    + void Initialize()
+    + void Update()
+}
+
+class BlackBoard {
+    - Dictionary<BlackBoardKey, object> values
+    + bool TryGetValue<T>(BlackBoardKey key, out T value)
+    + void SetValue<T>(BlackBoardKey key, T value)
+    + BlackBoardKey GetOrRegister(string keyName)
+}
+
+class Player {
+    - MovementScript movement
+}
+
+interface IDamagable {
+    + int CurrentHealth {get;}
+    + void TakeDamage(int amount)
+}
+
+Node <|-- BehaviourTree
+Node <|-- SequenceNode
+Node <|-- SelectorNode
+Node <|-- LeafNode
+
+IStrategy <|.. ActionStrategy
+IStrategy <|.. ConditionStrategy
+IStrategy <|.. MoveStrategy
+IStrategy <|.. AttackStrategy
+
+LeafNode *--> IStrategy
+
+Enemy *--> BehaviourTree
+Enemy *--> BlackBoard
+
+BlackBoard *--> BlackBoardKey
+
+Player ..|> IDamagable
+
+AttackStrategy --> IDamagable
+Node --> NodeStatus
+
+@enduml
