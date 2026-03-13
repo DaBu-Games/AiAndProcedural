@@ -82,7 +82,7 @@ public class BlackBoard
         entries[key] = new BlackBoardEntry<T>(key, value);
     }
 
-    public BlackBoardKey GetOrRegister(string keyName)
+    public BlackBoardKey GetOrRegisterKey(string keyName)
     {
         if(keyName == null) throw new ArgumentNullException(nameof(keyName));
 

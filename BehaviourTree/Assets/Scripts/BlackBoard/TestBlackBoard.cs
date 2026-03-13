@@ -7,7 +7,7 @@ public class TestBlackBoard : MonoBehaviour
 
     private void Awake()
     {
-        BlackBoardKey IsTestKey = blackBoard.GetOrRegister("IsTested");
+        BlackBoardKey IsTestKey = blackBoard.GetOrRegisterKey("IsTested");
         blackBoard.SetValue(IsTestKey, false);
 
         if (blackBoard.TryGetValue(IsTestKey, out bool isTested))
