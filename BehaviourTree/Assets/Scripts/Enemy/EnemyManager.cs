@@ -1,10 +1,12 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.AI;
 
-public class Enemy : MonoBehaviour
+public class EnemyManager : MonoBehaviour
 {
     [SerializeField] private FieldOfView fov;
+    [SerializeField] private List<Transform> patrolPoints = new();
+    [SerializeField] private NavMeshAgent agent;
     [SerializeField] private Renderer objectRenderer;
 
     private readonly BlackBoard _blackBoard = new BlackBoard();
@@ -22,6 +24,7 @@ public class Enemy : MonoBehaviour
     {
         _tree = new BehaviourTree("guardTree");
         
+        /*
         SequenceNode isSafeSequence = new SequenceNode("IsSafeSequence");
         
         bool IsSafe()
@@ -34,14 +37,24 @@ public class Enemy : MonoBehaviour
         }
         
         isSafeSequence.AddChild(new LeafNode("isSafeCondition", new ConditionStrategy(IsSafe)));
-        isSafeSequence.AddChild(new LeafNode("IsSafeToComeOut", new ActionStrategy(() => objectRenderer.enabled = true)
-        ));
+        isSafeSequence.AddChild(new LeafNode("IsSafeToComeOut", new ActionStrategy(() => objectRenderer.enabled = true)));
         
         SelectorNode isSafeSelector = new SelectorNode("IsSafeSelector");
         isSafeSelector.AddChild(isSafeSequence);
         isSafeSelector.AddChild(new LeafNode("Setactivefalse", new ActionStrategy( () => objectRenderer.enabled = false)));
+        */
         
-        _tree.AddChild(isSafeSelector);
+        SequenceNode patrolSequence = new SequenceNode("PatrolSequence");
+
+        foreach (var patrolPoint in patrolPoints)
+        {
+            patrolSequence.AddChild(new LeafNode(
+                $"WalkToPoint_x{patrolPoint.position.x:F1}_z{patrolPoint.position.z:F1}", 
+                    new MoveStrategy(patrolPoint, this.transform, agent)
+            ));
+        }
+        
+        _tree.AddChild(patrolSequence);
     }
 
     private void Update()

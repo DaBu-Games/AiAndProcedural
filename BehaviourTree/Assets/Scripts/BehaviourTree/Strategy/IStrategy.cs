@@ -1,4 +1,6 @@
 using System;
+using UnityEngine;
+using UnityEngine.AI;
 
 public interface IStrategy
 {
@@ -29,6 +31,33 @@ public class ConditionStrategy : IStrategy
     public NodeStatus Process()
     {
         return _condition.Invoke() ? NodeStatus.Success : NodeStatus.Failure;
+    }
+}
+
+public class MoveStrategy : IStrategy
+{
+    private readonly Transform _target;
+    private readonly Transform _entity;
+    private readonly NavMeshAgent _agent;
+
+    public MoveStrategy(Transform target, Transform entity, NavMeshAgent agent)
+    {
+        _target = target;
+        _entity = entity;
+        _agent = agent;
+    }
+    
+    public NodeStatus Process()
+    {
+        _agent.SetDestination(_target.position);
+        _entity.LookAt(_target.position);
+
+        if (_agent.remainingDistance <= _agent.stoppingDistance)
+        {
+            return NodeStatus.Success;
+        }
+        
+        return NodeStatus.Running;
     }
 }
 
