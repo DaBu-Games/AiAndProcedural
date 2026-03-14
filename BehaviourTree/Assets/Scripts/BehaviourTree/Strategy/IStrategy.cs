@@ -31,3 +31,4 @@ public class ConditionStrategy : IStrategy
         return _condition.Invoke() ? NodeStatus.Success : NodeStatus.Failure;
     }
 }
+
