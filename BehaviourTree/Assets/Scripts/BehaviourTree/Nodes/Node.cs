@@ -22,6 +22,15 @@ public abstract class Node
 
     public void AddChild(Node child) => Children.Add(child);
 
+    public Node GetCurrentNode()
+    {
+        if (Children.Count == 0)
+            return this;
+        
+        int count = CurrentChild >= Children.Count ? Children.Count : CurrentChild;
+        return Children[count].GetCurrentNode();
+    }
+
     public virtual NodeStatus Process()
     {
         return Children[CurrentChild].Process();

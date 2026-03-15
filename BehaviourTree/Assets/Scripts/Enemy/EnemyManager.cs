@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
@@ -6,10 +8,10 @@ using UnityEngine.InputSystem;
 public class EnemyManager : MonoBehaviour
 {
     [SerializeField] private FieldOfView fov;
-    [SerializeField] private Transform player;
     [SerializeField] private List<Transform> patrolPoints = new();
     [SerializeField] private NavMeshAgent agent;
     [SerializeField] private GameObject weapon;
+    [SerializeField] private TextMeshProUGUI textBox;
 
     private readonly BlackBoard _blackBoard = new BlackBoard();
     private BlackBoardKey _canSeePlayerKey;
@@ -33,7 +35,7 @@ public class EnemyManager : MonoBehaviour
         
         //Patrol sequence
         // check if the lastseeplayerpos is null if it is patrol
-        SequenceNode patrolSequence = new SequenceNode("PatrolSequence");
+        SequenceNode patrolSequence = new SequenceNode("patrolSequence");
         bool HasNoPlayerPos()
         {
             if (_blackBoard.TryGetValue(_lastSeePlayerPosKey, out Vector3 playerPos) && playerPos != Vector3.zero) {
@@ -48,7 +50,7 @@ public class EnemyManager : MonoBehaviour
         foreach (var patrolPoint in patrolPoints)
         {
             patrolSequence.AddChild(new LeafNode(
-                $"WalkToPoint_x{patrolPoint.position.x:F1}_z{patrolPoint.position.z:F1}", 
+                "walkToPoint_X" + patrolPoint.position.x + "Z" + patrolPoint.position.z, 
                 new MoveStrategy(patrolPoint.position, this.transform, agent)
             ));
         }
@@ -66,8 +68,9 @@ public class EnemyManager : MonoBehaviour
             return false;
         }
         followPlayer.AddChild(new LeafNode("hasWeaponCondition", new ConditionStrategy(HasWeapon)));
-        followPlayer.AddChild(new LeafNode("followPlayerMove", new FollowStrategy(_blackBoard, transform, agent)));
+        followPlayer.AddChild(new LeafNode("followPlayer", new FollowStrategy(_blackBoard, transform, agent)));
         
+        //Get weapon sequence
         SequenceNode getWeaponSequence = new SequenceNode("getWeaponSequence");
         getWeaponSequence.AddChild(new LeafNode("moveToWeapon", new MoveStrategy(weapon.transform.position, this.transform, agent)));
         getWeaponSequence.AddChild(new LeafNode("pickUpWeapon", new ActionStrategy( () =>
@@ -98,10 +101,47 @@ public class EnemyManager : MonoBehaviour
     private void Update()
     {
         _tree.Process();
-        
+        UpdateUI();
         /*
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) {
-            _tree.PrintTree();
-        }*/
+            Debug.Log(_tree.GetCurrentNode().Name);
+        }
+        */
+    }
+
+    private void UpdateUI()
+    {
+        string currentNodeName = _tree.GetCurrentNode().Name;
+        if (textBox.text != currentNodeName)
+        {
+            textBox.text = AddSpacesToSentence(currentNodeName);
+        }
+            
+    }
+    
+    private string AddSpacesToSentence(string text)
+    {
+        System.Text.StringBuilder result = new System.Text.StringBuilder();
+    
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            
+            if (i > 0 && char.IsUpper(c))
+            {
+                result.Append(' ');
+            }
+            
+            if (c == '_')
+            {
+                result.Append('\n');
+            }
+            else
+            {
+                result.Append(c);
+            }
+        }
+    
+        return result.ToString();
     }
 }
