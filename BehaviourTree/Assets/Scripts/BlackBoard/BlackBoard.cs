@@ -47,6 +47,7 @@ public class BlackBoard
 {
     private Dictionary<string, BlackBoardKey> keyRegistry = new();
     private Dictionary<BlackBoardKey, object> entries = new();
+    private Dictionary<BlackBoardKey, Action> subscribers = new();
 
     public void Debug()
     {
@@ -79,7 +80,13 @@ public class BlackBoard
 
     public void SetValue<T>(BlackBoardKey key, T value)
     {
+        bool changedValue = !entries.ContainsKey(key) || !entries[key].Equals(value);
         entries[key] = new BlackBoardEntry<T>(key, value);
+        
+        if (changedValue && subscribers.ContainsKey(key))
+        {
+           subscribers[key]?.Invoke();
+        }
     }
 
     public BlackBoardKey GetOrRegisterKey(string keyName)
@@ -93,6 +100,20 @@ public class BlackBoard
         }
         
         return key;
+    }
+
+    public void SubScribe(BlackBoardKey key, Action action)
+    {
+        if(!subscribers.TryAdd(key, action))
+            subscribers[key] += action;
+    }
+
+    public void UnsubScribe(BlackBoardKey key, Action action)
+    {
+        if (subscribers.ContainsKey(key))
+        {
+            subscribers[key] -= action;
+        }
     }
     
     public bool ContainsKey(BlackBoardKey key) => entries.ContainsKey(key);

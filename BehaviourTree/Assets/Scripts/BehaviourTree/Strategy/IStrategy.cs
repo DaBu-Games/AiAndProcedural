@@ -36,24 +36,70 @@ public class ConditionStrategy : IStrategy
 
 public class MoveStrategy : IStrategy
 {
-    private readonly Transform _target;
+    private readonly Vector3 _targetPosition;
     private readonly Transform _entity;
     private readonly NavMeshAgent _agent;
+    private bool _pathStarted = false;
 
-    public MoveStrategy(Transform target, Transform entity, NavMeshAgent agent)
+    public MoveStrategy(Vector3 target, Transform entity, NavMeshAgent agent)
     {
-        _target = target;
+        _targetPosition = target;
         _entity = entity;
         _agent = agent;
     }
     
     public NodeStatus Process()
     {
-        _agent.SetDestination(_target.position);
-        _entity.LookAt(_target.position);
-
-        if (_agent.remainingDistance <= _agent.stoppingDistance)
+        if (!_pathStarted)
         {
+            _agent.SetDestination(_targetPosition);
+            _entity.LookAt(_targetPosition);
+            _pathStarted = true;
+            return NodeStatus.Running;
+        }
+        
+        if (_agent.remainingDistance <= _agent.stoppingDistance + 0.01f)
+        {
+            Debug.Log("succes move");
+            return NodeStatus.Success;
+        }
+        
+        return NodeStatus.Running;
+    }
+    
+    public void Reset()
+    {
+        _pathStarted = false;
+        //Debug.Log("reset follow");
+    }
+}
+
+public class FollowStrategy : IStrategy
+{
+    private readonly BlackBoard _blackBoard;
+    private readonly Transform _entity;
+    private readonly NavMeshAgent _agent;
+    private BlackBoardKey _lastSeePlayerPosKey;
+    private bool _isPathCalculated;
+    
+    public FollowStrategy(BlackBoard blackBoard, Transform entity, NavMeshAgent agent)
+    {
+        _blackBoard = blackBoard;
+        _entity = entity;
+        _agent = agent;
+        _lastSeePlayerPosKey = _blackBoard.GetOrRegisterKey("lastSeePlayerPos");
+    }
+
+    public NodeStatus Process()
+    {
+        _blackBoard.TryGetValue(_lastSeePlayerPosKey, out Vector3 targetPos);
+        _agent.SetDestination(targetPos);
+        _entity.LookAt(targetPos);
+        
+        if (Vector3.Distance(_entity.position, targetPos) <= _agent.stoppingDistance)
+        {
+            Debug.Log("follow succes");
+            _blackBoard.SetValue(_lastSeePlayerPosKey, Vector3.zero);
             return NodeStatus.Success;
         }
         

@@ -1,5 +1,6 @@
-using System.Collections.Generic;using Unity.VisualScripting;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Text;
 
 public enum NodeStatus
 {
@@ -10,18 +11,21 @@ public enum NodeStatus
 
 public abstract class Node
 {
-    private string _name;
-    protected readonly List<Node> Children = new List<Node>();
+    public string Name { get; private set; }
+    public readonly List<Node> Children = new List<Node>();
     protected int CurrentChild = 0;
 
-    public Node(string name)
+    protected Node(string name)
     {
-        this._name = name;
+        this.Name = name;
     }
 
     public void AddChild(Node child) => Children.Add(child);
 
-    public virtual NodeStatus Process() =>  Children[CurrentChild].Process();
+    public virtual NodeStatus Process()
+    {
+        return Children[CurrentChild].Process();
+    } 
 
     public virtual void Reset()
     {

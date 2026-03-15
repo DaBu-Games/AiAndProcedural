@@ -16,12 +16,15 @@ public class FieldOfView : MonoBehaviour
     
     private BlackBoard _blackBoard;
     private BlackBoardKey _canSeePlayer;
+    private BlackBoardKey _lastSeePlayerPosKey;
 
     public void Initialize(BlackBoard blackBoard)
     {
         _blackBoard = blackBoard;
        _canSeePlayer = _blackBoard.GetOrRegisterKey("canSeePlayer");
+       _lastSeePlayerPosKey = _blackBoard.GetOrRegisterKey("lastSeePlayerPos");
        _blackBoard.SetValue(_canSeePlayer, _isTargetVisible);
+       _blackBoard.SetValue(_lastSeePlayerPosKey, Vector3.zero);
     }
 
     private void Update()
@@ -32,6 +35,11 @@ public class FieldOfView : MonoBehaviour
         {
             _isTargetVisible = currentVisibility;
             _blackBoard.SetValue(_canSeePlayer, _isTargetVisible);
+        }
+        
+        if (currentVisibility)
+        {
+            _blackBoard.SetValue(_lastSeePlayerPosKey, target.position);
         }
     }
 
