@@ -2,17 +2,31 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IDamagable
 {
     [SerializeField] private float moveSpeed = 6f;
+    [SerializeField] private float startHealth = 100f;
+    public float MaxHealth => startHealth;
+    public float Health { get; set; }
     
     private Camera _camera;
     private Rigidbody _rb;
     private Vector2 _moveInput;
     private Vector3 _velocity;
 
+    private void OnEnable()
+    {
+        GameEvents.OnPlayerDamaged += TakeDamage;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnPlayerDamaged -= TakeDamage;
+    }
+
     void Start()
     {
+        Health = startHealth;
         _rb = GetComponent<Rigidbody>();
         _camera = Camera.main;
     }
@@ -42,5 +56,20 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         _rb.MovePosition(_rb.position + _velocity * Time.fixedDeltaTime);
+    }
+    
+    public void TakeDamage(float damage)
+    {
+        Health -= damage;
+        GameEvents.OnUpdateHealth?.Invoke();
+        
+        if(Health <= 0)
+            HandleDeath();
+    }
+
+    public void HandleDeath()
+    {
+        gameObject.SetActive(false);
+        GameEvents.OnPlayerDeath?.Invoke();
     }
 }

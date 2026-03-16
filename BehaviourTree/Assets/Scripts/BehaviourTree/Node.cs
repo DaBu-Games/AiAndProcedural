@@ -12,7 +12,7 @@ public enum NodeStatus
 public abstract class Node
 {
     public string Name { get; private set; }
-    public readonly List<Node> Children = new List<Node>();
+    protected readonly List<Node> Children = new List<Node>();
     protected int CurrentChild = 0;
 
     protected Node(string name)
@@ -27,8 +27,8 @@ public abstract class Node
         if (Children.Count == 0)
             return this;
         
-        int count = CurrentChild >= Children.Count ? Children.Count : CurrentChild;
-        return Children[count].GetCurrentNode();
+        int index = Mathf.Clamp(CurrentChild, 0, Children.Count - 1);
+        return Children[index].GetCurrentNode();
     }
 
     public virtual NodeStatus Process()

@@ -78,6 +78,16 @@ public class BlackBoard
         return false;
     }
 
+    public bool IsValueEqualTo<T>(BlackBoardKey key, T value)
+    {
+        if (entries.TryGetValue(key, out var entry) && entry is BlackBoardEntry<T> castedEntry)
+        {
+            return value.Equals(castedEntry.Value);
+        }
+        
+        return false;
+    }
+
     public void SetValue<T>(BlackBoardKey key, T value)
     {
         bool changedValue = !entries.ContainsKey(key) || !entries[key].Equals(value);

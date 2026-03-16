@@ -15,26 +15,37 @@ public class FieldOfView : MonoBehaviour
     private bool _isTargetVisible = false;
     
     private BlackBoard _blackBoard;
-    private BlackBoardKey _canSeePlayer;
+    private BlackBoardKey _canSeePlayerKey;
     private BlackBoardKey _lastSeePlayerPosKey;
+    private BlackBoardKey _isPlayerAliveKey;
 
     public void Initialize(BlackBoard blackBoard)
     {
         _blackBoard = blackBoard;
-       _canSeePlayer = _blackBoard.GetOrRegisterKey("canSeePlayer");
+       _canSeePlayerKey = _blackBoard.GetOrRegisterKey("canSeePlayer");
        _lastSeePlayerPosKey = _blackBoard.GetOrRegisterKey("lastSeePlayerPos");
-       _blackBoard.SetValue(_canSeePlayer, _isTargetVisible);
-       _blackBoard.SetValue(_lastSeePlayerPosKey, Vector3.zero);
+       _isPlayerAliveKey = _blackBoard.GetOrRegisterKey("isPlayerAlive");
+       ResetValues();
+    }
+
+    public void ResetValues()
+    {
+        _isTargetVisible = false;
+        _blackBoard.SetValue(_canSeePlayerKey, false);
+        _blackBoard.SetValue(_lastSeePlayerPosKey, Vector3.zero);
     }
 
     private void Update()
     {
+        if(_blackBoard.IsValueEqualTo(_isPlayerAliveKey, false))
+            return;
+        
         bool currentVisibility = CheckTargetVisibility();
 
         if (_isTargetVisible != currentVisibility)
         {
             _isTargetVisible = currentVisibility;
-            _blackBoard.SetValue(_canSeePlayer, _isTargetVisible);
+            _blackBoard.SetValue(_canSeePlayerKey, _isTargetVisible);
         }
         
         if (currentVisibility)
@@ -67,7 +78,7 @@ public class FieldOfView : MonoBehaviour
     }
     
 
-    public Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
+    private Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
     {
         if (!angleIsGlobal)
             angleInDegrees += transform.eulerAngles.y;

@@ -60,7 +60,7 @@ public class MoveStrategy : IStrategy
         
         if (_agent.remainingDistance <= _agent.stoppingDistance + 0.01f)
         {
-            Debug.Log("succes move");
+            //Debug.Log("succes move");
             return NodeStatus.Success;
         }
         
@@ -98,12 +98,43 @@ public class FollowStrategy : IStrategy
         
         if (Vector3.Distance(_entity.position, targetPos) <= _agent.stoppingDistance)
         {
-            Debug.Log("follow succes");
+            //Debug.Log("follow succes");
             _blackBoard.SetValue(_lastSeePlayerPosKey, Vector3.zero);
             return NodeStatus.Success;
         }
         
         return NodeStatus.Running;
+    }
+}
+
+public class WaitStrategy : IStrategy
+{
+    private float _waitTime;
+    private float _startTime;
+    private bool _hasStarted = false;
+    
+    public WaitStrategy(float waitTime) => _waitTime = waitTime;
+
+    public NodeStatus Process()
+    {
+        if (!_hasStarted)
+        {
+            _startTime = Time.time;
+            _hasStarted = true;
+        }
+
+        if (Time.time - _startTime >= _waitTime)
+        {
+            _hasStarted = false;
+            return NodeStatus.Success;
+        }
+        
+        return NodeStatus.Running;
+    }
+
+    public void Reset()
+    {
+        _hasStarted = false;
     }
 }
 
