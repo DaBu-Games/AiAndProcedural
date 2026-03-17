@@ -81,9 +81,7 @@ public class BlackBoard
     public bool IsValueEqualTo<T>(BlackBoardKey key, T value)
     {
         if (entries.TryGetValue(key, out var entry) && entry is BlackBoardEntry<T> castedEntry)
-        {
             return value.Equals(castedEntry.Value);
-        }
         
         return false;
     }
@@ -121,9 +119,7 @@ public class BlackBoard
     public void UnsubScribe(BlackBoardKey key, Action action)
     {
         if (subscribers.ContainsKey(key))
-        {
             subscribers[key] -= action;
-        }
     }
     
     public bool ContainsKey(BlackBoardKey key) => entries.ContainsKey(key);
