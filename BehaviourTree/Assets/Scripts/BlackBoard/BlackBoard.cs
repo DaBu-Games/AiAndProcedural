@@ -92,9 +92,7 @@ public class BlackBoard
         entries[key] = new BlackBoardEntry<T>(key, value);
         
         if (changedValue && subscribers.ContainsKey(key))
-        {
            subscribers[key]?.Invoke();
-        }
     }
 
     public BlackBoardKey GetOrRegisterKey(string keyName)
