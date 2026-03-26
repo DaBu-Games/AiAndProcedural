@@ -1,0 +1,52 @@
+@startuml
+
+enum CellType
+{
+}
+
+class OreDeposit
+{
+# List<Vector2Int> orePositions
++ void List<Vector2Int> GetOrePositions()
+}
+
+class RandomWalk
+{
+# List<OreDeposit> oreDeposits;
+
++ RandomWalk (int seed)
++ CellType [,] GetCave()
+}
+
+class CaveCellularAutomate
+{
++ CaveCellulareAutomate(CellType [,] cave, int seed)
++ CellType [,] GetCave()
+}
+
+class CaveVisualisation
+{
++ void VisualiseCave(CellType [,] cave)
+}
+
+class CaveManager
+{
+# RandomWalk randomWalk
+# CaveCellulareAutomate cellulareAutomate
+}
+
+
+RandomWalk --> CellType
+RandomWalk *--> OreDeposit
+
+CaveCellularAutomate --> CellType
+
+CaveVisualisation --> CellType
+
+CaveManager --> RandomWalk
+CaveManager --> CaveCellularAutomate
+CaveManager --> CaveVisualisation
+
+OreDeposit --> CellType
+
+@enduml
