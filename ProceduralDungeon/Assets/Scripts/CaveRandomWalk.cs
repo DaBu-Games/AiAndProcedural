@@ -1,26 +1,32 @@
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class CaveRandomWalk
 {
-    private Vector2Int _gridSize;
     private CellType[,] _cave;
     private List<OreDeposit> _oreDeposits = new List<OreDeposit>();
     
     private readonly CaveGenerationValues _values;
-    
-    public CaveRandomWalk(Vector2Int gridSize, CaveGenerationValues values)
+
+    public static bool IsOutOfBounds(Vector2Int pos, CellType[,] cave)
     {
-        _gridSize = gridSize;
+        return pos.x < 0 || pos.x >= cave.GetLength(0) || pos.y < 0 || pos.y >= cave.GetLength(1);
+    }
+    
+    public CaveRandomWalk(CaveGenerationValues values)
+    {
         _values = values;
     }
     
     public CellType[,] GetCave() => _cave;
+    
+    public void SetCave(CellType[,] cave) => _cave = cave;
 
-    public void StartRandomWalk()
+    public void StartRandomWalk(Vector2Int caveSize)
     {
+        _cave = new CellType[caveSize.x, caveSize.y];
+        
         FillCave();
         GenerateOreDeposits();
         RandomWalk();
@@ -28,11 +34,9 @@ public class CaveRandomWalk
     
     private void FillCave()
     {
-        _cave = new CellType[_gridSize.x, _gridSize.y];
-
-        for (int x = 0; x < _gridSize.x; x++)
+        for (int x = 0; x < _cave.GetLength(0); x++)
         {
-            for (int y = 0; y < _gridSize.y; y++)
+            for (int y = 0; y < _cave.GetLength(1); y++)
             {
                 _cave[x, y] = CellType.Wall;
             }
@@ -63,15 +67,14 @@ public class CaveRandomWalk
             {
                 int dx = x + pos.x;
                 int dy = y + pos.y;
+                Vector2Int position = new Vector2Int(dx, dy);
                 
-                if(dx < 0 || dy < 0 || dx >= _gridSize.x || dy >= _gridSize.y)
+                if(IsOutOfBounds(position, _cave))
                     continue;
                 
                 float distance = Mathf.Sqrt(x * x + y * y);
                 if(distance > depositRadius)
                     continue;
-                
-                Vector2Int position = new Vector2Int(dx, dy);
                 
                 if (_cave[dx, dy] == CellType.Ore)
                 {
@@ -132,16 +135,16 @@ public class CaveRandomWalk
         return mergedDeposit;
     }
     
-    private Vector2Int GetRandomPosition() => new Vector2Int(Random.Range(0, _gridSize.x), Random.Range(0, _gridSize.y));
+    private Vector2Int GetRandomPosition() => new (Random.Range(0, _cave.GetLength(0)), Random.Range(0, _cave.GetLength(1)));
     
     private void RandomWalk()
     {
         int changedCells = 0;
         
-        int maxCells = _gridSize.x * _gridSize.y;
+        int maxCells = _cave.GetLength(0) * _cave.GetLength(1);
         int minTurnedCells = (int)(maxCells * _values.MinTurnedCellsPercentage);
         int maxTurnedCells = (int)(maxCells * _values.MaxTurnedCellsPercentage);
-        int minCells = Random.Range(minTurnedCells, maxTurnedCells);
+        int minCells = Random.Range(minTurnedCells, maxTurnedCells + 1);
 
         Vector2Int currentCell = GetRandomPosition();
 
@@ -159,7 +162,7 @@ public class CaveRandomWalk
 
                 if (currentType == CellType.Ore)
                 {
-                    GetExistingOreDeposit(currentCell).SetExposed();
+                    GetExistingOreDeposit(currentCell)?.SetExposed();
                 }
             }
 
@@ -190,8 +193,10 @@ public class CaveRandomWalk
                 break;
         }
         
-        nextCell.x = Mathf.Clamp(nextCell.x, 0, _gridSize.x -1);
-        nextCell.y = Mathf.Clamp(nextCell.y, 0, _gridSize.y -1);
+        if (IsOutOfBounds(nextCell, _cave))
+        {
+            return pos;
+        }
     
         return nextCell;
     }
@@ -200,12 +205,11 @@ public class CaveRandomWalk
     {
         foreach (var deposit in _oreDeposits)
         {
-            if (!deposit.IsExposed())
-                continue;
+            CellType turnType = deposit.IsExposed() ? CellType.Floor : CellType.Wall;
 
             foreach (var position in deposit.GetOrePositions())
             {
-                _cave[position.x, position.y] = CellType.Floor;
+                _cave[position.x, position.y] = turnType;
             }
         }
     }

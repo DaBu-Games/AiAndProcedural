@@ -427,10 +427,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be53383125194fd3b5b9afe9572f503b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CaveManager
-  seed: 12
+  seed: 15
   gridSize: {x: 200, y: 200}
   cellSize: 1
   values: {fileID: 11400000, guid: e20ef77fc7a1df7479a699d6a9c0caca, type: 2}
+  carveOut: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

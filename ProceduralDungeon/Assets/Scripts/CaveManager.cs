@@ -9,24 +9,31 @@ public class CaveManager : MonoBehaviour
     [SerializeField] private Vector2Int gridSize;
     [SerializeField] private float cellSize = 1f;
     [SerializeField] private CaveGenerationValues values;
+    [SerializeField] private bool carveOut = false;
     
     private CaveRandomWalk _randomWalk;
+    private CaveCellularAutomata _automata;
     private CellType[,] _currentCave;
 
     private void Start()
     {
         Random.InitState(seed);
-        _randomWalk = new CaveRandomWalk(gridSize, values);
-        _randomWalk.StartRandomWalk();
+        _randomWalk = new CaveRandomWalk(values);
+        _randomWalk.StartRandomWalk(gridSize);
         _currentCave = _randomWalk.GetCave();
+        
+        _automata = new CaveCellularAutomata(values);
     }
 
     private void Update()
     {
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (carveOut)
         {
+            _automata.StartCellularAutomata(_randomWalk.GetCave());
+            _randomWalk.SetCave(_automata.GetCave());
             _randomWalk.CarveOutOreDeposits();
-            _currentCave = _randomWalk.GetCave();
+            _currentCave = _automata.GetCave();
+            carveOut = false;
         }
     }
 

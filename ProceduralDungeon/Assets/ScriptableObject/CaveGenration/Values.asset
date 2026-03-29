@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abf1cfab13b54fd7abf5aa39506a4ed8, type: 3}
   m_Name: Values
   m_EditorClassIdentifier: Assembly-CSharp::CaveGenerationValues
-  MinTurnedCellsPercentage: 0.3
+  MinTurnedCellsPercentage: 0.5
   MaxTurnedCellsPercentage: 0.6
+  AutomataIterations: 10
+  AutomataWallTreshhold: 5
+  AutomataOpenSpaceThreshold: 2
   MinOreDeposits: 5
   MaxOreDeposits: 10
   MinOreDepositRadius: 5
