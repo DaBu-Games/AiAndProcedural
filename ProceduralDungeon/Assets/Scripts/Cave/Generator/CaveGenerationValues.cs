@@ -1,14 +1,12 @@
 using UnityEngine;
-using UnityEngine.Serialization;
+
 
 [CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/CaveGenerationValues")]
 public class CaveGenerationValues : ScriptableObject
 {
     [Header("Random walk settings")] 
     [Range(0f, 1f)]
-    public float MinTurnedCellsPercentage = 0.3f;
-    [Range(0f, 1f)]
-    public float MaxTurnedCellsPercentage = 0.5f;
+    public float TurnedCellsPercentage = 0.3f;
     
     [Header("Cellular automata settings")] 
     public int AutomataIterations = 5;
@@ -20,4 +18,8 @@ public class CaveGenerationValues : ScriptableObject
     public int MaxOreDeposits = 10;
     public int MinOreDepositRadius = 5;
     public int MaxOreDepositRadius = 15;
+
+    [Header("Create content settings")] 
+    public int EntranceWallThreshhold = 3;
+    public int EnemyWallThreshhold = 1;
 }
