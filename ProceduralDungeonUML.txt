@@ -1,52 +1,69 @@
 @startuml
 
-enum CellType
-{
+class CaveGenerationValues{
 }
 
-class OreDeposit
-{
-# List<Vector2Int> orePositions
-+ void List<Vector2Int> GetOrePositions()
+enum CellType{
+    Wall,
+    Floor,
+    Ore,
+    Entrance,
+    Enemy,
+    Gass,
 }
 
-class RandomWalk
-{
-# List<OreDeposit> oreDeposits;
+class CaveManager{
+# CaveVisualisation caveVisualisation
+# CaveGenerationValues values
 
-+ RandomWalk (int seed)
-+ CellType [,] GetCave()
+# void GenerateCave(int seed, Vector2Int gridSize)
 }
 
-class CaveCellularAutomate
-{
-+ CaveCellulareAutomate(CellType [,] cave, int seed)
-+ CellType [,] GetCave()
+class CellSprites{
++ CellType CellType
++ Sprite CellSprite
 }
 
-class CaveVisualisation
-{
-+ void VisualiseCave(CellType [,] cave)
+class CaveVisualisation{
+# List<CellSprites> cellSprites
++ void SetCave(CellType[,] cave)
 }
 
-class CaveManager
-{
-# RandomWalk randomWalk
-# CaveCellulareAutomate cellulareAutomate
+class CaveCellularAutomata{
+# CaveGenerationValues values
++ CellType[,] GetCave()
++ void StartCellularAutomata(CellType[,] cave)
 }
 
+class CaveFloodFill{
+# CaveGenerationValues values
++ CellType[,] GetCave()
++ void StartFloodFill(CellType[,] cave)
+}
 
-RandomWalk --> CellType
-RandomWalk *--> OreDeposit
+class CaveGenerateDeposits{
+# CaveGenerationValues values
++ CellType[,] GetCave()
++ void GenerateOreDeposits(CellType[,] cave)
+}
 
-CaveCellularAutomate --> CellType
+class CaveRandomWalk{
+# CaveGenerationValues values
++ CellType[,] GetCave()
++ void StartRandomWalk(Vector2Int gridSize)
+}
 
-CaveVisualisation --> CellType
-
-CaveManager --> RandomWalk
-CaveManager --> CaveCellularAutomate
+CaveManager --> CaveRandomWalk
+CaveManager --> CaveCellularAutomata
+CaveManager --> CaveFloodFill
+CaveManager --> CaveGenerateDeposits
 CaveManager --> CaveVisualisation
 
-OreDeposit --> CellType
+CaveRandomWalk --> CaveGenerationValues
+CaveCellularAutomata --> CaveGenerationValues
+CaveFloodFill --> CaveGenerationValues
+CaveGenerateDeposits --> CaveGenerationValues
+
+CaveVisualisation --> CellSprites
 
 @enduml
