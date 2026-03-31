@@ -20,3 +20,8 @@ MonoBehaviour:
   MaxOreDeposits: 5
   MinOreDepositRadius: 3
   MaxOreDepositRadius: 6
+  OreAwayFromBorderPercentage: 0.25
+  EntranceWallThreshhold: 3
+  EnemyWallThreshhold: 1
+  GasAwayFromBorderPercentage: 0.3
+  TurnedGasPercentage: 0.1

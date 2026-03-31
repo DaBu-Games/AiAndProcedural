@@ -17,16 +17,32 @@ public class CaveGenerateDeposits
     {
         _cave = cave;
         
-        int oreDeposits = Random.Range(_values.MinOreDeposits, _values.MaxOreDeposits);
-        for (int i = 0; i < oreDeposits; i++)
+        MakeRandomOreDeposits(Random.Range(_values.MinOreDeposits, _values.MaxOreDeposits));
+       
+        
+        if(shownDeposits < _values.MinOreDeposits)
+            MakeRandomOreDeposits(_values.MinOreDeposits - shownDeposits);
+        
+        Debug.Log($"Shown deposits: {shownDeposits}");
+    }
+
+    private void MakeRandomOreDeposits(int amount)
+    {
+        for (int i = 0; i < amount; i++)
         {
             MakeRandomOreDeposit();
         }
-        
-        //Debug.Log($"Shown deposits: {shownDeposits}");
     }
-    
-    private Vector2Int GetRandomPosition() => new (Random.Range(0, _cave.GetLength(0)), Random.Range(0, _cave.GetLength(1)));
+
+    private Vector2Int GetRandomPosition()
+    {
+        int minX = (int)(_cave.GetLength(0) * _values.OreAwayFromBorderPercentage);
+        int minY = (int)(_cave.GetLength(1) * _values.OreAwayFromBorderPercentage);
+        int maxX = _cave.GetLength(0) - minX;
+        int maxY = _cave.GetLength(1) - minY;
+        
+        return new Vector2Int(Random.Range(minX, maxX), Random.Range(minY, maxY));
+    }
 
     private void MakeRandomOreDeposit()
     {

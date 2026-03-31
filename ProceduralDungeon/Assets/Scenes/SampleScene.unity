@@ -439,6 +439,8 @@ MonoBehaviour:
     CellSprite: {fileID: 408030364, guid: 829d523074904734da416590bded3f3b, type: 3}
   - CellType: 4
     CellSprite: {fileID: 1400138253, guid: 829d523074904734da416590bded3f3b, type: 3}
+  - CellType: 5
+    CellSprite: {fileID: 21300000, guid: 248e42275bd5a3e4fa5bfde1c25c0f33, type: 3}
   cameraManager: {fileID: 330585548}
   cellPadding: 0
 --- !u!4 &626675780

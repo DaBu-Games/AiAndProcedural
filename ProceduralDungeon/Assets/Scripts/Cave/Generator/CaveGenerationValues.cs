@@ -18,8 +18,11 @@ public class CaveGenerationValues : ScriptableObject
     public int MaxOreDeposits = 10;
     public int MinOreDepositRadius = 5;
     public int MaxOreDepositRadius = 15;
+    public float OreAwayFromBorderPercentage = 0.3f;
 
     [Header("Create content settings")] 
     public int EntranceWallThreshhold = 3;
     public int EnemyWallThreshhold = 1;
+    public float GasAwayFromBorderPercentage = 0.3f;
+    public float TurnedGasPercentage = 0.1f;
 }

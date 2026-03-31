@@ -40,7 +40,7 @@ public class CaveFloodFill
         regions.RemoveAt(currentRegionIndex);
         
         RemoveSmallerRegions(regions);
-        CreateCaveContent(mainRegion);
+        CreateCaveGas(mainRegion);
     }
 
     private List<List<Vector2Int>> GetRegions()
@@ -102,6 +102,62 @@ public class CaveFloodFill
         }
     }
 
+    private void CreateCaveGas(List<Vector2Int> region)
+    {
+        Vector2Int gasStart;
+        do
+        {
+            gasStart = region[Random.Range(0, region.Count)];
+        } while (!IsFarFromBorder(gasStart, _values.GasAwayFromBorderPercentage) && _cave[gasStart.x, gasStart.y] == CellType.Floor);
+        
+        int targetSize = (int)(region.Count * _values.TurnedGasPercentage);
+        
+        List<Vector2Int> gasCells = new List<Vector2Int>();
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
+        HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
+        
+        queue.Enqueue(gasStart);
+        visited.Add(gasStart);
+
+        while (queue.Count > 0 && gasCells.Count < targetSize)
+        {
+            Vector2Int current = queue.Dequeue();
+            gasCells.Add(current);
+            
+            foreach (var dir in CaveManager.Directions)
+            {
+                Vector2Int next = current + dir;
+                        
+                if(visited.Contains(next) || !region.Contains(next))
+                    continue;
+                
+                if(_cave[next.x, next.y] != CellType.Floor)
+                    continue;
+                
+                queue.Enqueue(next);
+                visited.Add(next);
+            }
+        }
+
+        foreach (var gasCell in gasCells)
+        {
+            _cave[gasCell.x, gasCell.y] = CellType.Gass;
+            region.Remove(gasCell);
+        }
+        
+        CreateCaveContent(region);
+    }
+
+    private bool IsFarFromBorder(Vector2Int pos, float borderPercentage)
+    {
+        int minX = (int)(_cave.GetLength(0) * borderPercentage);
+        int minY = (int)(_cave.GetLength(1) * borderPercentage);
+        int maxX = _cave.GetLength(0) - minX;
+        int maxY = _cave.GetLength(1) - minY;
+        
+        return pos.x > minX && pos.x < maxX && pos.y > minY && pos.y < maxY;
+    }
+
     private void CreateCaveContent(List<Vector2Int> region)
     {
         foreach (var pos in region)
@@ -114,11 +170,12 @@ public class CaveFloodFill
                 _entranceAmount++;
             }
             // Place enemy
-            else if (CaveManager.GetCellTypeCount(pos, 1, _cave, new []{CellType.Wall, CellType.Ore, CellType.Enemy}) 
+            else if (CaveManager.GetCellTypeCount(pos, 2, _cave, new []{CellType.Wall, CellType.Ore, CellType.Enemy}) 
                 < _values.EnemyWallThreshhold)
             {
                 _cave[pos.x, pos.y] = CellType.Enemy;
             }
+            
         }
     }
     

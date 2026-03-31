@@ -5,4 +5,5 @@ public enum CellType
     Ore,
     Entrance,
     Enemy,
+    Gass,
 }
