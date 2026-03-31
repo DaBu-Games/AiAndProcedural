@@ -6,18 +6,18 @@ using Random = UnityEngine.Random;
 
 public class CaveManager : MonoBehaviour
 {
-    [SerializeField] private int seed;
-    [SerializeField] private Vector2Int gridSize;
     [SerializeField] private CaveGenerationValues values;
     [SerializeField] private CaveVisualisation caveVisualisation;
 
     private void Start()
     {
-        GenerateCave();
+        GameEvents.OnGenerateCave += GenerateCave;
     }
 
-    private void GenerateCave()
+    private void GenerateCave(int seed, Vector2Int gridSize)
     {
+        Debug.Log(seed);
+        Debug.Log(gridSize);
         Random.InitState(seed);
         CaveRandomWalk randomWalk = new CaveRandomWalk(values);
         randomWalk.StartRandomWalk(gridSize);
